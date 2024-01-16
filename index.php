@@ -43,7 +43,21 @@
       border-radius: 5px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       text-align: center;
+      background-color: rgba(255, 165, 0, 0.7);
+    }
+    #indicatorSelector {
       background-color: orange;
+      color: white;
+      border: white 1px solid;
+      padding: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #indicatorSelector option {
+      background-color: rgba(255, 165, 0, 0.7);
+      color: white;
+      border-radius: 3px;
     }
   </style>
 </head>
@@ -63,7 +77,6 @@
       <option value="komposit10">Komposit10</option>
       
     </select>
-    <button id="toggleInfoBtn">Toggle Info</button>
   </div>
   <div id="map"></div>
 
@@ -88,22 +101,35 @@
     console.log(data);
 
 
-function popUp(feature, layer) {
-  var out = [];
+    function popUp(feature, layer) {
   var currentFeatureId = feature.properties.id;
   var currentFeatureData = data.find(item => item.id == currentFeatureId);
 
   if (currentFeatureData) {
-    out.push('kabupaten/kota = ' + currentFeatureData.kab_kota);
-    out.push('ncpr = ' + currentFeatureData.ncpr);
-    out.push('kemiskinan = ' + currentFeatureData.kemiskinan);
-
+    var table = '<table>';
+    table += '<tr><td colspan="2"><b>' + currentFeatureData.kab_kota.toUpperCase() + '</b></td></tr>';
+    table += '<tr><td colspan="2"><b><hr></b></td></tr>';
+    table += '<tr><td><b>NCPR</b></td><td>: ' + currentFeatureData.ncpr + '</td></tr>';
+    table += '<tr><td><b>Kemiskinan</b></td><td>: ' + currentFeatureData.kemiskinan + '</td></tr>';
+    table += '<tr><td><b>Pangan</b></td><td>: ' + currentFeatureData.pangan + '</td></tr>';
+    table += '<tr><td><b>Listrik</b></td><td>: '  + currentFeatureData.listrik + '</td></tr>';
+    table += '<tr><td><b>Air</b></td><td>: ' + currentFeatureData.air + '</td></tr>';
+    table += '<tr><td><b>Sekolah</b></td><td>: ' + currentFeatureData.sekolah + '</td></tr>';
+    table += '<tr><td><b>Kesehatan</b></td><td>: ' + currentFeatureData.kesehatan + '</td></tr>';
+    table += '<tr><td><b>Harapan Hidup</b></td><td>: ' + currentFeatureData.harapan_hidup + '</td></tr>';
+    table += '<tr><td><b>Stunting</b></td><td>: ' + currentFeatureData.stunting + '</td></tr>';
+    table += '<tr><td><b>LKP</b></td><td>: ' + currentFeatureData.ikp + '</td></tr>';
+    table += '<tr><td><b>LKP Ranting</b></td><td>: ' + currentFeatureData.ikp_rangking + '</td></tr>';
+    
     var selectedValue = currentFeatureData[selectedAttribute] !== undefined ? currentFeatureData[selectedAttribute] : 'Data tidak tersedia';
-    out.push(selectedAttribute + ' = ' + selectedValue);
-  }
+    table += '<tr><td><b>' + selectedAttribute + '</b></td><td>: 1' + selectedValue + '</td></tr>';
 
-  layer.bindPopup(out.join('<br />'));
+    table += '</table>';
+
+    layer.bindPopup(table);
+  }
 }
+
 
 
 
@@ -138,21 +164,23 @@ function getColor(value) {
 
     var legend = L.control({ position: 'topright' });
 
-    legend.onAdd = function (map) {
-      var div = L.DomUtil.create('div', 'info legend'),
-        grades = [1, 2, 3, 4, 5, 6],
-        colors = ['#800026', '#BD0026', '#E31A1C', '#FC4E2A', '#FD8D3C', '#FEB24C'];
+legend.onAdd = function (map) {
+  var div = L.DomUtil.create('div', 'info legend'),
+    grades = [1, 2, 3, 4, 5, 6],
+    colors = ['#A32C33', '#EF585F', '#E31A1C', '#A9F8B9', '#37F847', '#235A33'];
 
-      div.innerHTML += '<b>Kaitan Warna - Level Composit</b><br>';
+  div.innerHTML += '<b>Kaitan Warna - Level Composit</b><br>';
 
-      for (var i = 0; i < grades.length; i++) {
-        div.innerHTML +=
-          '<i style="background:' + colors[i] + '"></i> ' +
-          (i === grades.length - 1 ? '&ge;' : '') + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-      }
+  for (var i = 0; i < grades.length; i++) {
+    div.innerHTML +=
+      '<div style="background:' + colors[i] + ';width:100px;height:15px;padding:5;color:black;"><p style="padding-left:120px">' +
+      (grades[i] + '</p><br>') +
+      '</div>';
+  }
 
-      return div;
-    };
+  return div;
+};
+
 
     legend.addTo(map);
     var jsonTest = new L.GeoJSON.AJAX(['assets/geojson/kabupaten.geojson'], {
