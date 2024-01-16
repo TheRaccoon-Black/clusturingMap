@@ -122,7 +122,7 @@
     table += '<tr><td><b>LKP Ranting</b></td><td>: ' + currentFeatureData.ikp_rangking + '</td></tr>';
     
     var selectedValue = currentFeatureData[selectedAttribute] !== undefined ? currentFeatureData[selectedAttribute] : 'Data tidak tersedia';
-    table += '<tr><td><b>' + selectedAttribute + '</b></td><td>: 1' + selectedValue + '</td></tr>';
+    table += '<tr><td><b>' + selectedAttribute + '</b></td><td>: ' + selectedValue + '</td></tr>';
 
     table += '</table>';
 
