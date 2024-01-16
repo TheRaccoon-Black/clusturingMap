@@ -50,18 +50,11 @@
 
 <body>
   <div id="navbar">
+
     <select id="indicatorSelector">
       <option value="komposit">Komposit1</option>
       <option value="komposit2">Komposit2</option>
-      <option value="komposit3">komposit3</option>
-      <option value="komposit4">Komposit4</option>
-      <option value="komposit5">Komposit5</option>
-      <option value="komposit6">Komposit6</option>
-      <option value="komposit7">Komposit7</option>
-      <option value="komposit8">Komposit8</option>
-      <option value="komposit9">Komposit9</option>
-      <option value="komposit10">Komposit10</option>
-      
+      <!-- ... tambahkan pilihan untuk komposit3, komposit4, dan seterusnya sesuai kebutuhan -->
     </select>
     <button id="toggleInfoBtn">Toggle Info</button>
   </div>
@@ -80,60 +73,64 @@
 
     <?php
       include 'koneksi.php';
-      $data = mysqli_query($conn, "SELECT * FROM data JOIN dataset ON SUBSTRING_INDEX(dataset.kab_kota, ' - ', -1) = data.name AND SUBSTRING_INDEX(dataset.kab_kota, ' - ', 1) = data.prov_name;");
-    ?>  
+      $data = mysqli_query($conn, "SELECT data.id, data.prov_id, data.prov_name, data.name, data.alt_name, data.uuid, data.color, dataset.id AS dataset_id, dataset.kab_kota, dataset.komposit, dataset.ncpr, dataset.kemiskinan, dataset.pangan, dataset.listrik, dataset.air, dataset.sekolah, dataset.kesehatan, dataset.harapan_hidup, dataset.stunting, dataset.ikp, dataset.ikp_rangking FROM data JOIN dataset ON SUBSTRING_INDEX(dataset.kab_kota, ' - ', -1) = data.name AND SUBSTRING_INDEX(dataset.kab_kota, ' - ', 1) = data.prov_name;");
+    ?>
 
-    var data = <?php echo json_encode(mysqli_fetch_all($data, MYSQLI_ASSOC)); ?>;
-    var selectedAttribute = 'komposit'; 
-    console.log(data);
+    var selectedAttribute = 'komposit'; // default selected attribute
 
+    function popUp(feature, layer) {
+      var out = [];
 
-function popUp(feature, layer) {
-  var out = [];
-  var currentFeatureId = feature.properties.id;
-  var currentFeatureData = data.find(item => item.id == currentFeatureId);
+      <?php
+      
+      mysqli_data_seek($data, 0);
 
-  if (currentFeatureData) {
-    out.push('kabupaten/kota = ' + currentFeatureData.kab_kota);
-    out.push('ncpr = ' + currentFeatureData.ncpr);
-    out.push('kemiskinan = ' + currentFeatureData.kemiskinan);
+      while ($d = mysqli_fetch_array($data)) {
+        ?>
+        if (feature.properties.id == <?= $d['id'] ?>) {
+          out.push('ncpr = ' + <?= $d['ncpr'] ?>);
+          out.push('kemiskinan = ' + <?= $d['kemiskinan'] ?>);
+          // ... tambahkan atribut lainnya sesuai kebutuhan
+          out.push(selectedAttribute + ' = ' + <?= json_encode($d[$selectedAttribute]) ?>);
 
-    var selectedValue = currentFeatureData[selectedAttribute] !== undefined ? currentFeatureData[selectedAttribute] : 'Data tidak tersedia';
-    out.push(selectedAttribute + ' = ' + selectedValue);
-  }
+        }
+        <?php
+      }
+      ?>
 
-  layer.bindPopup(out.join('<br />'));
-}
+      layer.bindPopup(out.join('<br />'));
+    }
 
-
-
-function getColor(value) {
-  return value == 1 ? '#A32C33' :
-         value == 2 ? '#EF585F' :
-         value == 3 ? '#EFA8AF' :
-         value == 4 ? '#A9F8B9' :
-         value == 5 ? '#37F847' :
-         value == 6 ? '#235A33' :
-         '#EFF8FF';
-}
-
+    function getColor(composit) {
+      return composit === 1 ? '#800026' :
+        composit === 2 ? '#BD0026' :
+          composit === 3 ? '#E31A1C' :
+            composit === 4 ? '#FC4E2A' :
+              composit === 5 ? '#FD8D3C' :
+                composit === 6 ? '#FEB24C' :
+                  '#FFEDA0';
+    }
 
     function style(feature) {
-      var currentFeatureId = feature.properties.id;
-      var currentFeatureData = data.find(item => item.id == currentFeatureId);
+      <?php
+      
+      mysqli_data_seek($data, 0);
 
-      if (currentFeatureData) {
-        return {
-          fillColor: getColor(currentFeatureData[selectedAttribute]),
-          weight: 1,
-          opacity: 1,
-          color: 'white',
-          dashArray: '3',
-          fillOpacity: 0.7
-        };
+      while ($d = mysqli_fetch_array($data)) {
+        ?>
+        if (feature.properties.id == <?= $d['id'] ?>) {
+          return {
+            fillColor: getColor(<?= $d[$selectedAttribute] ?>),
+            weight: 1,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: 0.7
+          };
+        }
+        <?php
       }
-
-      return {}; 
+      ?>
     }
 
     var legend = L.control({ position: 'topright' });
@@ -145,10 +142,11 @@ function getColor(value) {
 
       div.innerHTML += '<b>Kaitan Warna - Level Composit</b><br>';
 
+      
       for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
           '<i style="background:' + colors[i] + '"></i> ' +
-          (i === grades.length - 1 ? '&ge;' : '') + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+          grades[i] +'<br>';
       }
 
       return div;
@@ -156,17 +154,19 @@ function getColor(value) {
 
     legend.addTo(map);
     var jsonTest = new L.GeoJSON.AJAX(['assets/geojson/kabupaten.geojson'], {
-      onEachFeature: popUp,
-      style: style
-    }).addTo(map);
-    document.getElementById('indicatorSelector').addEventListener('change', function (event) {
+  onEachFeature: popUp,
+  style: style
+}).addTo(map);
+
+// Change layer color when selecting a different attribute
+document.getElementById('indicatorSelector').addEventListener('change', function (event) {
   selectedAttribute = event.target.value;
-  jsonTest.clearLayers(); 
+  jsonTest.clearLayers(); // Clear the existing layer
   jsonTest = new L.GeoJSON.AJAX(['assets/geojson/kabupaten.geojson'], {
     onEachFeature: popUp,
     style: style
   }).addTo(map);
-  legend.addTo(map); 
+  legend.addTo(map); // Update legend
 });
   </script>
 
