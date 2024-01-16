@@ -7,19 +7,21 @@
   <title>SIG</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
     #map {
       height: 830px;
     }
+
     .info.legend {
       background: white;
       padding: 5px;
       border: 1px solid #ccc;
       border-radius: 5px;
     }
+
     .leaflet-control .info.legend {
       padding: 6px 8px;
       font: 14px/16px Arial, Helvetica, sans-serif;
@@ -43,26 +45,23 @@
       text-align: center;
       background-color: orange;
     }
-
   </style>
 </head>
 
 <body>
   <div id="navbar">
-    
     <select id="indicatorSelector">
-      <option value="ncpr">NCPR</option>
-      <option value="kemiskinan">Kemiskinan</option>
-      <option value="pangan">Pangan</option>
-      <option value="listrik">listrik</option>
-      <option value="air">Air</option>
-      <option value="kemiskinan">Kemiskinan</option>
-      <option value="sekolah">sekolah</option>
-      <option value="kesehatan">kesehatan</option>
-      <option value="harapan hidup">harapan hidup</option>
-      <option value="stunting">stunting</option>
-      <option value="ikp">ikp</option>
-      <option value="ikp_rangking">IKP rangking</option>
+      <option value="komposit">Komposit1</option>
+      <option value="komposit2">Komposit2</option>
+      <option value="komposit3">komposit3</option>
+      <option value="komposit4">Komposit4</option>
+      <option value="komposit5">Komposit5</option>
+      <option value="komposit6">Komposit6</option>
+      <option value="komposit7">Komposit7</option>
+      <option value="komposit8">Komposit8</option>
+      <option value="komposit9">Komposit9</option>
+      <option value="komposit10">Komposit10</option>
+      
     </select>
     <button id="toggleInfoBtn">Toggle Info</button>
   </div>
@@ -81,69 +80,60 @@
 
     <?php
       include 'koneksi.php';
-      $data = mysqli_query($conn, "SELECT data.id, data.prov_id, data.prov_name, data.name, data.alt_name, data.uuid, data.color, dataset.id AS dataset_id, dataset.kab_kota, dataset.komposit, dataset.ncpr, dataset.kemiskinan, dataset.pangan, dataset.listrik, dataset.air, dataset.sekolah, dataset.kesehatan, dataset.harapan_hidup, dataset.stunting, dataset.ikp, dataset.ikp_rangking FROM data JOIN dataset ON SUBSTRING_INDEX(dataset.kab_kota, ' - ', -1) = data.name AND SUBSTRING_INDEX(dataset.kab_kota, ' - ', 1) = data.prov_name;");
-    ?>
+      $data = mysqli_query($conn, "SELECT * FROM data JOIN dataset ON SUBSTRING_INDEX(dataset.kab_kota, ' - ', -1) = data.name AND SUBSTRING_INDEX(dataset.kab_kota, ' - ', 1) = data.prov_name;");
+    ?>  
 
-    function popUp(feature, layer) {
-      var out = [];
+    var data = <?php echo json_encode(mysqli_fetch_all($data, MYSQLI_ASSOC)); ?>;
+    var selectedAttribute = 'komposit'; 
+    console.log(data);
 
-      <?php
-      
-      mysqli_data_seek($data, 0);
 
-      while ($d = mysqli_fetch_array($data)) {
-        ?>
-        if (feature.properties.id == <?= $d['id'] ?>) {
-          out.push('ncpr = ' + <?= $d['ncpr'] ?>);
-          out.push('kemiskinan = ' + <?= $d['kemiskinan'] ?>);
-          out.push('pangan = ' + <?= $d['pangan'] ?>);
-          out.push('listrik = ' + <?= $d['listrik'] ?>);
-          out.push('air = ' + <?= $d['air'] ?>);
-          out.push('kemiskinan = ' + <?= $d['kemiskinan'] ?>);
-          out.push('sekolah = ' + <?= $d['sekolah'] ?>);
-          out.push('kesehatan = ' + <?= $d['kesehatan'] ?>);
-          out.push('harapan hidup = ' + <?= $d['harapan_hidup'] ?>);
-          out.push('stunting = ' + <?= $d['stunting'] ?>);
-          out.push('IKP = ' + <?= $d['ikp'] ?>);
-          out.push('IKP Ranking = ' + <?= $d['ikp_rangking'] ?>);
-        }
-        <?php
-      }
-      ?>
+function popUp(feature, layer) {
+  var out = [];
+  var currentFeatureId = feature.properties.id;
+  var currentFeatureData = data.find(item => item.id == currentFeatureId);
 
-      layer.bindPopup(out.join('<br />'));
-    }
+  if (currentFeatureData) {
+    out.push('kabupaten/kota = ' + currentFeatureData.kab_kota);
+    out.push('ncpr = ' + currentFeatureData.ncpr);
+    out.push('kemiskinan = ' + currentFeatureData.kemiskinan);
 
-    function getColor(composit) {
-      return composit === 1 ? '#800026' :
-        composit === 2 ? '#BD0026' :
-          composit === 3 ? '#E31A1C' :
-            composit === 4 ? '#FC4E2A' :
-              composit === 5 ? '#FD8D3C' :
-                composit === 6 ? '#FEB24C' :
-                  '#FFEDA0';
-    }
+    var selectedValue = currentFeatureData[selectedAttribute] !== undefined ? currentFeatureData[selectedAttribute] : 'Data tidak tersedia';
+    out.push(selectedAttribute + ' = ' + selectedValue);
+  }
+
+  layer.bindPopup(out.join('<br />'));
+}
+
+
+
+function getColor(value) {
+  return value == 1 ? '#A32C33' :
+         value == 2 ? '#EF585F' :
+         value == 3 ? '#EFA8AF' :
+         value == 4 ? '#A9F8B9' :
+         value == 5 ? '#37F847' :
+         value == 6 ? '#235A33' :
+         '#EFF8FF';
+}
+
 
     function style(feature) {
-      <?php
-      
-      mysqli_data_seek($data, 0);
+      var currentFeatureId = feature.properties.id;
+      var currentFeatureData = data.find(item => item.id == currentFeatureId);
 
-      while ($d = mysqli_fetch_array($data)) {
-        ?>
-        if (feature.properties.id == <?= $d['id'] ?>) {
-          return {
-            fillColor: getColor(<?= $d['komposit'] ?>),
-            weight: 1,
-            opacity: 1,
-            color: 'white',
-            dashArray: '3',
-            fillOpacity: 0.7
-          };
-        }
-        <?php
+      if (currentFeatureData) {
+        return {
+          fillColor: getColor(currentFeatureData[selectedAttribute]),
+          weight: 1,
+          opacity: 1,
+          color: 'white',
+          dashArray: '3',
+          fillOpacity: 0.7
+        };
       }
-      ?>
+
+      return {}; 
     }
 
     var legend = L.control({ position: 'topright' });
@@ -155,22 +145,29 @@
 
       div.innerHTML += '<b>Kaitan Warna - Level Composit</b><br>';
 
-      
       for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
           '<i style="background:' + colors[i] + '"></i> ' +
-          grades[i] +'<br>';
+          (i === grades.length - 1 ? '&ge;' : '') + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
       }
 
       return div;
     };
 
     legend.addTo(map);
-
     var jsonTest = new L.GeoJSON.AJAX(['assets/geojson/kabupaten.geojson'], {
       onEachFeature: popUp,
       style: style
     }).addTo(map);
+    document.getElementById('indicatorSelector').addEventListener('change', function (event) {
+  selectedAttribute = event.target.value;
+  jsonTest.clearLayers(); 
+  jsonTest = new L.GeoJSON.AJAX(['assets/geojson/kabupaten.geojson'], {
+    onEachFeature: popUp,
+    style: style
+  }).addTo(map);
+  legend.addTo(map); 
+});
   </script>
 
 </html>
