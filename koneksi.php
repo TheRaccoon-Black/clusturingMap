@@ -2,7 +2,7 @@
 
 $host = "localhost";
 $user = "root"; 
-$pass = "admin"; 
+$pass = ""; 
 $dbname = "gis"; 
 
 $conn = new mysqli($host, $user, $pass, $dbname);
